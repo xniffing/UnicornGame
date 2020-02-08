@@ -1,9 +1,20 @@
 extends actor
 
+export var stomp_impulse = 1200.0
+
+func _on_EnemyDetector_area_entered(area: Area2D) -> void:
+	_velocity = calculate_stomp_velocity(_velocity, stomp_impulse)
+
+func _on_EnemyDetector_body_entered(body: PhysicsBody2D) -> void:
+	get_tree().reload_current_scene()
+
 func _physics_process(delta: float) -> void:
+	var is_jump_interrupted: = Input.is_action_just_released("jump") and _velocity.y < 0.0
 	var direction: = get_direction()
-	velocity = calculate_move_velocity(velocity, direction, speed)
-	velocity = move_and_slide(velocity, FLOOR_NORMAL)
+	_velocity = calculate_move_velocity(_velocity, direction, speed, is_jump_interrupted)
+	_velocity = move_and_slide(_velocity, FLOOR_NORMAL)
+	if Input.get_action_strength("reset"):
+		get_tree().reload_current_scene()
 	if Input.get_action_strength("move_right"):
 		get_node( "unicorn" ).set_flip_h( true )
 	elif Input.get_action_strength("move_left"):
@@ -18,11 +29,21 @@ func get_direction() -> Vector2:
 func calculate_move_velocity(
 		linear_velocity: Vector2,
 		direction: Vector2,
-		speed: Vector2
+		speed: Vector2,
+		is_jump_interrupted: bool
 	) -> Vector2:
-	var new_velocity = linear_velocity
-	new_velocity.x = speed.x * direction.x
-	new_velocity.y += gravity * get_physics_process_delta_time()
+	var out = linear_velocity
+	out.x = speed.x * direction.x
+	out.y += gravity * get_physics_process_delta_time()
 	if direction.y == -1.0:
-		new_velocity.y = speed.y * direction.y
-	return new_velocity
+		out.y = speed.y * direction.y
+	if is_jump_interrupted:
+		out.y = 0.0
+	return out
+
+func calculate_stomp_velocity(linear_velocity: Vector2, impulse: float) -> Vector2:
+	var out: = linear_velocity
+	out.y = -impulse
+	return out
+
+
