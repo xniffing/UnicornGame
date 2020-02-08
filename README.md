@@ -10,4 +10,5 @@ This game is made in GODOT Engine version 3.2
 Key binding:
 
 WASD or Arrows - Move
+
 R - reset
